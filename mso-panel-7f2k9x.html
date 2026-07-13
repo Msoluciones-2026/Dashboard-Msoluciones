@@ -86,6 +86,8 @@
   .btn-volver-mapa{background:none;border:1px solid var(--gris-300);color:var(--verde-oscuro);font-size:12px;padding:5px 12px;border-radius:999px;cursor:pointer;margin-bottom:10px;}
   .btn-volver-mapa:hover{background:var(--verde-claro);}
 
+  .info-region-fija{display:flex;align-items:center;gap:8px;background:var(--gris-100);border-radius:8px;padding:8px 12px;font-size:12.5px;margin-bottom:10px;}
+
   .chile-svg{height:460px;max-width:100%;width:auto;display:block;margin:0 auto;}
   .mapa-region{cursor:pointer;stroke:white;stroke-width:0.6;transition:opacity .15s;}
   .mapa-region:hover{opacity:0.75;}
@@ -124,7 +126,11 @@
     .grid2b{grid-template-columns:1fr;grid-template-rows:auto;}
     .chile-svg{height:320px;}
 
-    .scroll-table{max-height:320px;}
+    .scroll-table{max-height:320px;overflow-x:hidden;}
+    .tabla-x{overflow-x:hidden;}
+    .scroll-table table,.tabla-x table{table-layout:fixed;width:100%;}
+    .scroll-table th.num,.tabla-x th.num{width:18%;}
+    .scroll-table td,.scroll-table th,.tabla-x td,.tabla-x th{overflow-wrap:break-word;word-break:break-word;}
 
     .donut-wrap{flex-wrap:wrap;justify-content:center;}
 
@@ -356,6 +362,7 @@ function render(data, datosMapa){
   const gradPasEnd = pctProm + pctPas;
 
   const mapaHtml = generarMapaSvg(datosMapa.porRegion);
+  const regionInfo = filtroRegion ? datosMapa.porRegion.find(r => r.region === filtroRegion) : null;
 
   const empresasOrdenadas = [...data.porEmpresa].sort((a,b)=>a.promedio-b.promedio);
 
@@ -440,6 +447,7 @@ function render(data, datosMapa){
         <h3>Mapa por Región</h3>
         <div class="desc">Coloreado según promedio — click en una región para filtrar</div>
         ${filtroRegion ? `<button class="btn-volver-mapa">← Ver todas las regiones</button>` : ''}
+        ${regionInfo ? `<div class="info-region-fija"><span class="dot" style="background:${colorPorPromedio(regionInfo.promedio)};"></span><b>${filtroRegion}</b> — Promedio ${regionInfo.promedio} — ${regionInfo.totalRespuestas} respuesta(s)</div>` : ''}
         ${mapaHtml}
       </div>
 
