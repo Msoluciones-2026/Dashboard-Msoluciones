@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Dashboard — Encuesta MSoluciones</title>
 <style>
@@ -340,6 +341,7 @@ function aplicarFiltros(){
 }
 
 function render(data, datosMapa){
+  mapaTooltip.style.display = 'none';
   const total = data.totalRespuestas || 0;
   const promotores = data.nps.promotores || 0;
   const pasivos = data.nps.pasivos || 0;
