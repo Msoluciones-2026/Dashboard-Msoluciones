@@ -156,6 +156,7 @@
     .kpi .val{font-size:24px;}
   }
 </style>
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -204,8 +205,26 @@
 
 <div id="mapa-tooltip"></div>
 
+<div id="login-overlay" style="position:fixed;inset:0;background:#f5f8f6;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:2000;">
+  <img src="logo-msoluciones.png" alt="MSoluciones" style="height:56px;">
+  <p style="color:#5b6a64;font-size:14px;">Este dashboard es de uso interno. Inicia sesión con tu cuenta de Msoluciones para continuar.</p>
+  <button id="btn-login" style="background:#2f8557;color:white;border:none;border-radius:8px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;">Iniciar sesión con Microsoft</button>
+  <p id="login-error" style="color:#d1554a;font-size:13px;display:none;"></p>
+</div>
+
 <script>
-const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyzfIWTmXC_dPx73yR0iT2bLDqncfy1mmwQHxZF7rJ2uhhGai6cPj1vq2MFOfVXiX6O/exec";
+const msalConfig = {
+  auth: {
+    clientId: "03394f99-8767-416e-9853-1381d1775010",
+    authority: "https://login.microsoftonline.com/bf99a1f5-90ce-4295-997e-a15cf4541943",
+    redirectUri: window.location.href
+  }
+};
+const msalInstance = new msal.PublicClientApplication(msalConfig);
+const GRAPH_SCOPES = ["Files.Read.All"];
+const DRIVE_ID = "b!84YCqZBoTUyrf3jZCV2Rycot3TFzyHFLhMznpt3dKbW_xcU2Kbv3TpicKLJygCL-";
+const ITEM_ID = "01C2QDSD2YDAZIB6IVEBD2UOSXAWCK35B2";
+const NOMBRE_TABLA = "TablaRespuestas";
 
 const CHILE_MAP_WIDTH = 101.7;
 const CHILE_MAP_HEIGHT = 560;
@@ -525,6 +544,16 @@ function render(data, datosMapa){
   `;
 }
 
+async function obtenerToken(){
+  const cuentas = msalInstance.getAllAccounts();
+  if (cuentas.length === 0) throw new Error("No hay sesión activa");
+  const resultado = await msalInstance.acquireTokenSilent({
+    scopes: GRAPH_SCOPES,
+    account: cuentas[0]
+  });
+  return resultado.accessToken;
+}
+
 async function cargarDatos(){
   const contenido = document.getElementById('contenido');
   const btn = document.getElementById('btn-actualizar');
@@ -534,11 +563,24 @@ async function cargarDatos(){
   btn.disabled = true;
   btn.textContent = 'Actualizando…';
   try {
-    const resp = await fetch(URL_SCRIPT);
+    const token = await obtenerToken();
+    const resp = await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${ITEM_ID}/workbook/tables/${NOMBRE_TABLA}/rows`,
+      { headers: { "Authorization": "Bearer " + token } }
+    );
     if (!resp.ok) throw new Error("Respuesta no válida del servidor (" + resp.status + ")");
     const json = await resp.json();
-    todasLasRespuestas = json.respuestas || [];
-    ultimaActualizacion = json.ultimaActualizacion;
+
+    todasLasRespuestas = json.value.map(fila => {
+      const v = fila.values[0];
+      return {
+        fecha: v[0], empresa: v[1], nombre: v[2], cargo: v[3], correo: v[4],
+        q1: Number(v[5]), q2: Number(v[6]), q3: Number(v[7]), q4: Number(v[8]),
+        nps: Number(v[9]), comentarios: v[10], timestamp: v[11],
+        region: v[12], tipo: v[13]
+      };
+    });
+    ultimaActualizacion = new Date().toISOString();
     document.getElementById('ultima-act').textContent = "Actualizado: " + new Date(ultimaActualizacion).toLocaleString('es-CL');
 
     poblarSelect('select-region', todasLasRespuestas.map(r=>r.region), "Todas las regiones");
@@ -546,12 +588,41 @@ async function cargarDatos(){
 
     aplicarFiltros();
   } catch (err) {
-    contenido.innerHTML =
-      '<div class="msg err">No se pudieron cargar los datos.<br>' + err.message + '</div>';
+    contenido.innerHTML = '<div class="msg err">No se pudieron cargar los datos.<br>' + err.message + '</div>';
   } finally {
     contenido.classList.remove('cargando');
     btn.disabled = false;
     btn.textContent = textoOriginal;
+  }
+}
+
+async function iniciarApp(){
+  try {
+    await msalInstance.initialize();
+    const respuestaRedirect = await msalInstance.handleRedirectPromise();
+    let cuenta = respuestaRedirect?.account || msalInstance.getAllAccounts()[0];
+
+    if (!cuenta) {
+      document.getElementById('btn-login').onclick = async () => {
+        try {
+          const resultado = await msalInstance.loginPopup({ scopes: GRAPH_SCOPES });
+          msalInstance.setActiveAccount(resultado.account);
+          document.getElementById('login-overlay').style.display = 'none';
+          cargarDatos();
+        } catch (e) {
+          document.getElementById('login-error').textContent = "No se pudo iniciar sesión: " + e.message;
+          document.getElementById('login-error').style.display = 'block';
+        }
+      };
+      return;
+    }
+
+    msalInstance.setActiveAccount(cuenta);
+    document.getElementById('login-overlay').style.display = 'none';
+    cargarDatos();
+  } catch (e) {
+    document.getElementById('login-error').textContent = "Error al iniciar: " + e.message;
+    document.getElementById('login-error').style.display = 'block';
   }
 }
 
@@ -613,7 +684,7 @@ document.getElementById('contenido').addEventListener('mouseout', (e) => {
   mapaTooltip.style.display = 'none';
 });
 
-cargarDatos();
+iniciarApp();
 </script>
 </body>
 </html>
