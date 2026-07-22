@@ -158,6 +158,8 @@
 
     .grid2b{grid-template-columns:1fr;grid-template-rows:auto;}
     .chile-svg{height:320px;}
+    .card-mapa{height:400px;}
+    .card-mapa .chile-svg{max-height:340px;}
 
     .mapa-con-lista{gap:4px;}
     .lista-regiones{display:flex;width:78px;}
@@ -538,7 +540,7 @@ function render(data, datosMapa){
     </div>
 
     <div class="grid2b">
-      <div class="card">
+      <div class="card card-mapa">
         <h3>Mapa por Región</h3>
         <div class="desc">Coloreado según promedio — click en una región para filtrar</div>
         ${filtroRegion ? `<button class="btn-volver-mapa">← Ver todas las regiones</button>` : ''}
