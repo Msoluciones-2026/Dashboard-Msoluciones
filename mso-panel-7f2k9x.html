@@ -111,6 +111,8 @@
   table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px;}
   th{text-align:left;color:var(--gris-600);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:8px 6px;border-bottom:1px solid var(--gris-300);position:sticky;top:0;background:var(--white);}
   td{padding:9px 6px;border-bottom:1px solid var(--gris-100);}
+  .txt-short{display:none;}
+  .txt-full{display:inline;}
   .num{text-align:center;}
   .tag{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:600;}
   .tag.convenio{background:var(--verde-claro);color:var(--verde-oscuro);}
@@ -193,6 +195,12 @@
     #login-overlay p{font-size:12.5px;padding:0 8px;}
     #btn-login{width:100%;max-width:280px;padding:14px 20px;font-size:15px;}
     #login-error{font-size:12px;}
+
+    .txt-short{display:inline;}
+    .txt-full{display:none;}
+    th{font-size:10px;padding:6px 3px;}
+    td{padding:7px 3px;font-size:11.5px;}
+    .scroll-table th,.scroll-table td,.tabla-x th,.tabla-x td{white-space:normal;overflow-wrap:normal;word-break:keep-all;}
   }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
@@ -547,7 +555,7 @@ function render(data, datosMapa){
           <div class="desc">Ordenado de menor a mayor promedio — para detectar oportunidades de mejora primero</div>
           <div class="scroll-table">
             <table>
-              <tr><th>Centro</th><th>Región</th><th class="num">Respuestas</th><th class="num">Promedio</th><th class="num">NPS</th></tr>
+              <tr><th>Centro</th><th>Región</th><th class="num"><span class="txt-full">Respuestas</span><span class="txt-short">Resp.</span></th><th class="num"><span class="txt-full">Promedio</span><span class="txt-short">Prom.</span></th><th class="num">NPS</th></tr>
               ${empresasOrdenadas.map(e => `
                 <tr>
                   <td>${e.empresa}</td>
@@ -566,7 +574,7 @@ function render(data, datosMapa){
           <div class="desc">Convenio vs Terreno</div>
           <div class="tabla-x">
             <table>
-              <tr><th>Tipo</th><th class="num">Respuestas</th><th class="num">Promedio</th><th class="num">NPS</th></tr>
+              <tr><th>Tipo</th><th class="num"><span class="txt-full">Respuestas</span><span class="txt-short">Resp.</span></th><th class="num"><span class="txt-full">Promedio</span><span class="txt-short">Prom.</span></th><th class="num">NPS</th></tr>
               ${data.porTipo.map(t => `
                 <tr>
                   <td><span class="tag ${tagClase(t.tipo)}">${t.tipo}</span></td>
