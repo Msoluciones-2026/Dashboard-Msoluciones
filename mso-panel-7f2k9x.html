@@ -122,6 +122,21 @@
 
   .foot{margin-top:18px;font-size:11px;color:var(--gris-600);text-align:center;}
   .msg{padding:40px;text-align:center;color:var(--gris-600);font-size:13px;}
+  .sin-acceso{
+    display:flex;flex-direction:column;align-items:center;gap:14px;
+    padding:60px 24px;text-align:center;
+  }
+  .sin-acceso img{height:52px;}
+  .sin-acceso h2{margin:0;font-size:19px;color:var(--gris-900);}
+  .sin-acceso p{margin:0;font-size:13.5px;color:var(--gris-600);max-width:360px;line-height:1.5;}
+  .sin-acceso .badge{
+    background:#fdf1e4;color:#a5691a;font-size:12px;font-weight:700;
+    padding:5px 14px;border-radius:999px;
+  }
+  .sin-acceso .contacto{
+    margin-top:6px;background:var(--verde-claro);color:var(--verde-oscuro);
+    font-weight:600;font-size:13px;padding:9px 18px;border-radius:8px;
+  }
   .err{color:var(--rojo);}
   #contenido.cargando{opacity:0.4;pointer-events:none;transition:opacity .2s;}
 
@@ -588,7 +603,18 @@ async function cargarDatos(){
 
     aplicarFiltros();
   } catch (err) {
-    contenido.innerHTML = '<div class="msg err">No se pudieron cargar los datos.<br>' + err.message + '</div>';
+    if (err.message === "SIN_ACCESO") {
+      contenido.innerHTML = `
+        <div class="sin-acceso">
+          <img src="logo-msoluciones.png" alt="MSoluciones">
+          <span class="badge">Acceso restringido</span>
+          <h2>No tienes acceso a este dashboard</h2>
+          <p>Este panel es de uso interno y está disponible solo para personas autorizadas.</p>
+          <div class="contacto">Comunícate con el encargado para solicitar acceso</div>
+        </div>`;
+    } else {
+      contenido.innerHTML = '<div class="msg err">No se pudieron cargar los datos.<br>' + err.message + '</div>';
+    }
   } finally {
     contenido.classList.remove('cargando');
     btn.disabled = false;
