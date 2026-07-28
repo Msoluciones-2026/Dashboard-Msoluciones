@@ -618,10 +618,44 @@ async function cargarDatos(silencioso = false){
   }
   try {
     const token = await obtenerToken();
+
+    // Crear sesión de Excel para forzar sincronización real (no persistente, solo lectura)
+    const sesionResp = await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${ITEM_ID}/workbook/createSession`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ persistChanges: false })
+      }
+    );
+    if (!sesionResp.ok) throw new Error("No se pudo abrir sesión de Excel (" + sesionResp.status + ")");
+    const sesionJson = await sesionResp.json();
+    const sessionId = sesionJson.id;
+
     const resp = await fetch(
       `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${ITEM_ID}/workbook/tables/${NOMBRE_TABLA}/rows`,
-      { headers: { "Authorization": "Bearer " + token } }
+      {
+        headers: {
+          "Authorization": "Bearer " + token,
+          "workbook-session-id": sessionId
+        }
+      }
     );
+
+    // Cerrar la sesión después de usarla, sin bloquear el resto del flujo si falla
+    fetch(
+      `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${ITEM_ID}/workbook/closeSession`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "workbook-session-id": sessionId
+        }
+      }
+    ).catch(() => {});
     if (!resp.ok) throw new Error("Respuesta no válida del servidor (" + resp.status + ")");
     const json = await resp.json();
 
