@@ -606,14 +606,16 @@ async function obtenerToken(){
   return resultado.accessToken;
 }
 
-async function cargarDatos(){
+async function cargarDatos(silencioso = false){
   const contenido = document.getElementById('contenido');
   const btn = document.getElementById('btn-actualizar');
   const textoOriginal = btn.textContent;
-  contenido.classList.add('cargando');
-  document.getElementById('velocidad').textContent = '';
-  btn.disabled = true;
-  btn.textContent = 'Actualizando…';
+  if (!silencioso) {
+    contenido.classList.add('cargando');
+    document.getElementById('velocidad').textContent = '';
+    btn.disabled = true;
+    btn.textContent = 'Actualizando…';
+  }
   try {
     const token = await obtenerToken();
     const resp = await fetch(
@@ -653,9 +655,11 @@ async function cargarDatos(){
       contenido.innerHTML = '<div class="msg err">No se pudieron cargar los datos.<br>' + err.message + '</div>';
     }
   } finally {
-    contenido.classList.remove('cargando');
-    btn.disabled = false;
-    btn.textContent = textoOriginal;
+    if (!silencioso) {
+      contenido.classList.remove('cargando');
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
   }
 }
 
@@ -755,7 +759,7 @@ document.getElementById('contenido').addEventListener('mouseout', (e) => {
 iniciarApp();
 setInterval(() => {
   if (msalInstance.getAllAccounts().length > 0) {
-    cargarDatos();
+    cargarDatos(true);
   }
 }, 30000);
 </script>
