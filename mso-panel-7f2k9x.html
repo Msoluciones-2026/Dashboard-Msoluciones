@@ -753,6 +753,11 @@ document.getElementById('contenido').addEventListener('mouseout', (e) => {
 });
 
 iniciarApp();
+setInterval(() => {
+  if (msalInstance.getAllAccounts().length > 0) {
+    cargarDatos();
+  }
+}, 30000);
 </script>
 </body>
 </html>
