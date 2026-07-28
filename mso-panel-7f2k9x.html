@@ -159,14 +159,14 @@
     .escala-fila,.escala-marcas{grid-template-columns:70px minmax(50px,1fr) 32px;gap:6px;}
 
     .grid2b{grid-template-columns:1fr;grid-template-rows:auto;}
-    .chile-svg{height:320px;}
-    .card-mapa{height:400px;}
-    .card-mapa .chile-svg{max-height:340px;}
+    .chile-svg{height:auto;max-height:280px;width:auto;max-width:100%;display:block;margin:0 auto;}
+    .card-mapa{height:auto;display:block;overflow:visible;}
+    .card-mapa .mapa-con-lista{display:flex;align-items:center;justify-content:center;margin-top:8px;}
 
     .mapa-con-lista{gap:4px;}
     .lista-regiones{display:flex;width:78px;}
     .region-item{font-size:9.5px;padding:2px 4px;}
-    .info-region-fija{display:flex;}
+    .info-region-fija{display:flex;position:static;margin-bottom:8px;}
 
     .scroll-table{max-height:320px;overflow-x:hidden;}
     .tabla-x{overflow-x:hidden;}
