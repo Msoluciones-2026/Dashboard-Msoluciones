@@ -612,6 +612,41 @@ function render(data, datosMapa){
   `;
 }
 
+function normalizarEncabezado(texto){
+  return String(texto).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+const MAPA_COLUMNAS = {
+  "fecha": "fecha",
+  "empresa": "empresa",
+  "nombre": "nombre",
+  "cargo": "cargo",
+  "correo": "correo",
+  "q1 servicio entregado": "q1",
+  "q2 resolucion problemas": "q2",
+  "q3 entrega": "q3",
+  "q4 profesionalismo": "q4",
+  "nps": "nps",
+  "comentarios adicionales": "comentarios",
+  "timestamp": "timestamp",
+  "region": "region",
+  "tipo": "tipo"
+};
+
+function construirIndicesColumnas(encabezados){
+  const normalizados = encabezados.map(normalizarEncabezado);
+  const indices = {};
+  Object.keys(MAPA_COLUMNAS).forEach(nombreEsperado => {
+    const clave = MAPA_COLUMNAS[nombreEsperado];
+    const idx = normalizados.indexOf(nombreEsperado);
+    if (idx === -1) {
+      console.warn('Columna esperada no encontrada en la tabla de Excel: "' + nombreEsperado + '"');
+    }
+    indices[clave] = idx;
+  });
+  return indices;
+}
+
 async function obtenerToken(){
   const cuentas = msalInstance.getAllAccounts();
   if (cuentas.length === 0) throw new Error("No hay sesión activa");
@@ -647,19 +682,35 @@ async function cargarDatos(silencioso = false){
         body: JSON.stringify({ persistChanges: false })
       }
     );
-    if (!sesionResp.ok) throw new Error("No se pudo abrir sesión de Excel (" + sesionResp.status + ")");
+    if (!sesionResp.ok) {
+      if (sesionResp.status === 403) {
+        throw new Error("SIN_ACCESO");
+      }
+      throw new Error("No se pudo abrir sesión de Excel (" + sesionResp.status + ")");
+    }
     const sesionJson = await sesionResp.json();
     const sessionId = sesionJson.id;
 
-    const resp = await fetch(
-      `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${ITEM_ID}/workbook/tables/${NOMBRE_TABLA}/rows`,
-      {
-        headers: {
-          "Authorization": "Bearer " + token,
-          "workbook-session-id": sessionId
+    const [resp, headerResp] = await Promise.all([
+      fetch(
+        `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${ITEM_ID}/workbook/tables/${NOMBRE_TABLA}/rows`,
+        {
+          headers: {
+            "Authorization": "Bearer " + token,
+            "workbook-session-id": sessionId
+          }
         }
-      }
-    );
+      ),
+      fetch(
+        `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${ITEM_ID}/workbook/tables/${NOMBRE_TABLA}/headerRowRange`,
+        {
+          headers: {
+            "Authorization": "Bearer " + token,
+            "workbook-session-id": sessionId
+          }
+        }
+      )
+    ]);
 
     // Cerrar la sesión después de usarla, sin bloquear el resto del flujo si falla
     fetch(
@@ -672,16 +723,38 @@ async function cargarDatos(silencioso = false){
         }
       }
     ).catch(() => {});
-    if (!resp.ok) throw new Error("Respuesta no válida del servidor (" + resp.status + ")");
+    if (!resp.ok) {
+      if (resp.status === 403) {
+        throw new Error("SIN_ACCESO");
+      }
+      throw new Error("Respuesta no válida del servidor (" + resp.status + ")");
+    }
+    if (!headerResp.ok) {
+      if (headerResp.status === 403) {
+        throw new Error("SIN_ACCESO");
+      }
+      throw new Error("No se pudieron obtener los encabezados de la tabla (" + headerResp.status + ")");
+    }
     const json = await resp.json();
+    const headerJson = await headerResp.json();
+
+    const indicesColumnas = construirIndicesColumnas(headerJson.values[0]);
+    const obtenerValor = (v, clave) => {
+      const idx = indicesColumnas[clave];
+      return idx >= 0 ? v[idx] : undefined;
+    };
 
     todasLasRespuestas = json.value.map(fila => {
       const v = fila.values[0];
       return {
-        fecha: v[0], empresa: v[1], nombre: v[2], cargo: v[3], correo: v[4],
-        q1: Number(v[5]), q2: Number(v[6]), q3: Number(v[7]), q4: Number(v[8]),
-        nps: Number(v[9]), comentarios: v[10], timestamp: v[11],
-        region: v[12], tipo: v[13]
+        fecha: obtenerValor(v, 'fecha'), empresa: obtenerValor(v, 'empresa'),
+        nombre: obtenerValor(v, 'nombre'), cargo: obtenerValor(v, 'cargo'),
+        correo: obtenerValor(v, 'correo'),
+        q1: Number(obtenerValor(v, 'q1')), q2: Number(obtenerValor(v, 'q2')),
+        q3: Number(obtenerValor(v, 'q3')), q4: Number(obtenerValor(v, 'q4')),
+        nps: Number(obtenerValor(v, 'nps')), comentarios: obtenerValor(v, 'comentarios'),
+        timestamp: obtenerValor(v, 'timestamp'),
+        region: obtenerValor(v, 'region'), tipo: obtenerValor(v, 'tipo')
       };
     });
     ultimaActualizacion = new Date().toISOString();
