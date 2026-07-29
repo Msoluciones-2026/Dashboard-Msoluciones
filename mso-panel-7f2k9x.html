@@ -265,6 +265,13 @@
 </div>
 
 <script>
+function escapeHtml(texto) {
+  if (texto === null || texto === undefined) return '';
+  const div = document.createElement('div');
+  div.textContent = String(texto);
+  return div.innerHTML;
+}
+
 const msalConfig = {
   auth: {
     clientId: "03394f99-8767-416e-9853-1381d1775010",
@@ -326,8 +333,17 @@ function posEscala(v){
 function poblarSelect(id, valores, placeholder){
   const sel = document.getElementById(id);
   const actual = sel.value;
-  sel.innerHTML = `<option value="">${placeholder}</option>` +
-    [...new Set(valores)].sort((a,b)=>a.localeCompare(b,'es')).map(v => `<option value="${v}">${v}</option>`).join('');
+  sel.innerHTML = '';
+  const optPlaceholder = document.createElement('option');
+  optPlaceholder.value = '';
+  optPlaceholder.textContent = placeholder;
+  sel.appendChild(optPlaceholder);
+  [...new Set(valores)].sort((a,b)=>a.localeCompare(b,'es')).forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    sel.appendChild(opt);
+  });
   sel.value = actual;
 }
 
@@ -546,7 +562,7 @@ function render(data, datosMapa){
         <h3>Mapa por Región</h3>
         <div class="desc">Coloreado según promedio — click en una región para filtrar</div>
         ${filtroRegion ? `<button class="btn-volver-mapa">← Ver todas las regiones</button>` : ''}
-        ${regionInfo ? `<div class="info-region-fija"><span class="dot" style="background:${colorPorPromedio(regionInfo.promedio)};"></span><b>${filtroRegion}</b> — Promedio ${regionInfo.promedio} — ${regionInfo.totalRespuestas} respuesta(s)</div>` : ''}
+        ${regionInfo ? `<div class="info-region-fija"><span class="dot" style="background:${colorPorPromedio(regionInfo.promedio)};"></span><b>${escapeHtml(filtroRegion)}</b> — Promedio ${regionInfo.promedio} — ${regionInfo.totalRespuestas} respuesta(s)</div>` : ''}
         <div class="mapa-con-lista">
           <div class="lista-regiones">${listaRegiones.izquierda}</div>
           ${mapaHtml}
@@ -563,8 +579,8 @@ function render(data, datosMapa){
               <tr><th>Centro</th><th>Región</th><th class="num"><span class="txt-full">Respuestas</span><span class="txt-short">Resp.</span></th><th class="num"><span class="txt-full">Promedio</span><span class="txt-short">Prom.</span></th><th class="num">NPS</th></tr>
               ${empresasOrdenadas.map(e => `
                 <tr>
-                  <td>${e.empresa}</td>
-                  <td>${e.region}</td>
+                  <td>${escapeHtml(e.empresa)}</td>
+                  <td>${escapeHtml(e.region)}</td>
                   <td class="num">${e.totalRespuestas}</td>
                   <td class="num"><span class="promedio-pill" style="background:${colorPorPromedio(e.promedio)};">${e.promedio}</span></td>
                   <td class="num">${e.nps !== null ? e.nps : '—'}</td>
@@ -582,7 +598,7 @@ function render(data, datosMapa){
               <tr><th>Tipo</th><th class="num"><span class="txt-full">Respuestas</span><span class="txt-short">Resp.</span></th><th class="num"><span class="txt-full">Promedio</span><span class="txt-short">Prom.</span></th><th class="num">NPS</th></tr>
               ${data.porTipo.map(t => `
                 <tr>
-                  <td><span class="tag ${tagClase(t.tipo)}">${t.tipo}</span></td>
+                  <td><span class="tag ${tagClase(t.tipo)}">${escapeHtml(t.tipo)}</span></td>
                   <td class="num">${t.totalRespuestas}</td>
                   <td class="num">${t.promedio}</td>
                   <td class="num">${t.nps !== null ? t.nps : '—'}</td>
@@ -776,7 +792,7 @@ document.getElementById('contenido').addEventListener('mouseover', (e) => {
   const cuerpo = region.dataset.promedio !== undefined
     ? `Promedio ${region.dataset.promedio} — ${region.dataset.respuestas} respuesta(s)`
     : (region.classList.contains('sin-datos') ? 'Sin datos todavía' : 'Sin datos con este filtro');
-  mapaTooltip.innerHTML = `<div class="mapa-tooltip-titulo"><span class="mapa-tooltip-swatch" style="background:${region.dataset.color};"></span>${region.dataset.region}</div><div class="mapa-tooltip-datos">${cuerpo}</div>`;
+  mapaTooltip.innerHTML = `<div class="mapa-tooltip-titulo"><span class="mapa-tooltip-swatch" style="background:${region.dataset.color};"></span>${escapeHtml(region.dataset.region)}</div><div class="mapa-tooltip-datos">${cuerpo}</div>`;
   mapaTooltip.style.display = 'block';
   posicionarTooltip(e.clientX, e.clientY);
 });
