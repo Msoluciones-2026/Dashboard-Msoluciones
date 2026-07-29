@@ -613,7 +613,7 @@ function render(data, datosMapa){
 }
 
 function normalizarEncabezado(texto){
-  return String(texto).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return String(texto).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 const MAPA_COLUMNAS = {
