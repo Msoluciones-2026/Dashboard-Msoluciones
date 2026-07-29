@@ -881,10 +881,16 @@ document.getElementById('contenido').addEventListener('mouseout', (e) => {
 
 iniciarApp();
 setInterval(() => {
+  if (document.hidden) return;
   if (msalInstance.getAllAccounts().length > 0) {
     cargarDatos(true);
   }
-}, 30000);
+}, 90000);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && msalInstance.getAllAccounts().length > 0) {
+    cargarDatos(true);
+  }
+});
 </script>
 </body>
 </html>
