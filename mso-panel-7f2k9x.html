@@ -35,6 +35,8 @@
   .period{font-size:12px;color:var(--gris-600);background:var(--white);border:1px solid var(--gris-300);padding:7px 12px;border-radius:8px;display:flex;align-items:center;gap:8px;}
   .refresh-btn{background:var(--verde);color:white;border:none;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;}
   .refresh-btn:hover{background:var(--verde-oscuro);}
+  .detail-btn{background:var(--gris-900);color:white;border:none;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .detail-btn:hover{background:#000000;}
 
   .filters{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--white);border:1px solid var(--gris-300);border-radius:12px;padding:12px 16px;margin-bottom:18px;}
   .filtro-grupo{display:flex;align-items:center;gap:8px;}
@@ -43,6 +45,7 @@
   .chip{padding:6px 13px;border-radius:999px;font-size:12.5px;border:1px solid var(--gris-300);background:var(--gris-100);color:var(--gris-600);cursor:pointer;transition:.15s;}
   .chip:hover{border-color:var(--verde);}
   .chip.active{background:var(--verde);border-color:var(--verde);color:white;font-weight:600;}
+  .chip:focus-visible,.mapa-region:focus-visible,.region-item:focus-visible{outline:2px solid var(--verde);outline-offset:2px;}
   select{padding:6px 12px;border-radius:8px;border:1px solid var(--gris-300);background:var(--white);font-size:12.5px;color:var(--gris-900);max-width:220px;}
   .clear-btn{font-size:12px;color:var(--verde-oscuro);background:none;border:none;cursor:pointer;text-decoration:underline;margin-left:auto;}
 
@@ -144,6 +147,24 @@
   .err{color:var(--rojo);}
   #contenido.cargando{opacity:0.4;pointer-events:none;transition:opacity .2s;}
 
+  #detalle-overlay{display:none;position:fixed;inset:0;background:rgba(28,36,34,.55);z-index:1500;align-items:center;justify-content:center;padding:20px;}
+  #detalle-overlay.abierto{display:flex;}
+  .detalle-card{background:var(--white);border-radius:14px;max-width:920px;width:100%;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+  .detalle-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--gris-300);flex-shrink:0;}
+  .detalle-header h2{margin:0;font-size:16px;}
+  .detalle-body{padding:16px 20px;overflow-y:auto;}
+  .detalle-selector{margin-bottom:16px;}
+  .detalle-cols{display:flex;gap:16px;align-items:flex-start;}
+  .detalle-lista{width:220px;flex-shrink:0;max-height:440px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
+  .detalle-item{text-align:left;background:var(--gris-100);border:1px solid var(--gris-300);border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;color:var(--gris-900);}
+  .detalle-item:hover{border-color:var(--verde);}
+  .detalle-item.activo{background:var(--verde-claro);border-color:var(--verde);font-weight:600;color:var(--verde-oscuro);}
+  .detalle-panel{flex:1;min-width:0;background:var(--gris-100);border-radius:10px;padding:16px;}
+  .detalle-campo{margin-bottom:10px;font-size:12.5px;}
+  .detalle-campo b{color:var(--gris-600);font-weight:600;margin-right:4px;}
+  .detalle-preguntas{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+  .detalle-comentario{white-space:pre-wrap;background:var(--white);border:1px solid var(--gris-300);border-radius:8px;padding:12px;margin-top:6px;font-size:12.5px;line-height:1.5;}
+
   #login-overlay{padding:24px;}
   #login-overlay{gap:16px;}
   #login-overlay img{max-width:280px;width:60%;height:auto;}
@@ -180,6 +201,9 @@
 
     #login-overlay img{width:70%;max-width:220px;}
     #login-overlay p{font-size:13px;}
+
+    .detalle-cols{flex-direction:column;}
+    .detalle-lista{width:100%;max-height:160px;}
   }
 
   @media (max-width:480px){
@@ -224,6 +248,7 @@
     <div class="period">
       <span id="ultima-act">Cargando…</span>
       <span id="velocidad" style="color:var(--verde);font-weight:600;"></span>
+      <button class="detail-btn" id="btn-revisar-detalle" onclick="abrirModalDetalle()">Revisar encuestas una a una</button>
       <button class="refresh-btn" id="btn-actualizar" onclick="cargarDatos()">Actualizar</button>
     </div>
   </div>
@@ -231,18 +256,18 @@
   <div class="filters">
     <div class="filtro-grupo">
       <span class="label">Tipo</span>
-      <div class="chip-group" id="chips-tipo">
-        <span class="chip active" data-tipo="">Todos</span>
-        <span class="chip" data-tipo="convenio">Convenio</span>
-        <span class="chip" data-tipo="terreno">Terreno</span>
+      <div class="chip-group" id="chips-tipo" aria-label="Tipo">
+        <span class="chip active" data-tipo="" tabindex="0" role="button">Todos</span>
+        <span class="chip" data-tipo="convenio" tabindex="0" role="button">Convenio</span>
+        <span class="chip" data-tipo="terreno" tabindex="0" role="button">Terreno</span>
       </div>
     </div>
     <div class="filtro-grupo">
-      <span class="label">Región</span>
+      <label class="label" for="select-region">Región</label>
       <select id="select-region"><option value="">Todas las regiones</option></select>
     </div>
     <div class="filtro-grupo">
-      <span class="label">Hospital / Centro</span>
+      <label class="label" for="select-empresa">Hospital / Centro</label>
       <select id="select-empresa"><option value="">Todas</option></select>
     </div>
     <button class="clear-btn" onclick="limpiarFiltros()">Limpiar filtros</button>
@@ -256,6 +281,22 @@
 </div>
 
 <div id="mapa-tooltip"></div>
+
+<div id="detalle-overlay">
+  <div class="detalle-card">
+    <div class="detalle-header">
+      <h2>Revisar encuestas por centro</h2>
+      <button class="btn-volver-mapa" id="btn-cerrar-detalle">Cerrar</button>
+    </div>
+    <div class="detalle-body">
+      <div class="detalle-selector filtro-grupo">
+        <label class="label" for="select-detalle-empresa">Hospital / Centro</label>
+        <select id="select-detalle-empresa"><option value="">Selecciona un centro</option></select>
+      </div>
+      <div id="detalle-contenido"></div>
+    </div>
+  </div>
+</div>
 
 <div id="login-overlay" style="position:fixed;inset:0;background:#f5f8f6;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:2000;">
   <img src="logo-msoluciones.png" alt="MSoluciones" style="height:56px;">
@@ -312,6 +353,10 @@ let filtroTipo = "";
 let filtroRegion = "";
 let filtroEmpresa = "";
 
+let detalleEmpresaSeleccionada = "";
+let detalleRespuestas = [];
+let detalleIndiceSeleccionado = -1;
+
 function tagClase(tipo){
   const t = (tipo||"").toLowerCase();
   if (t === "convenio") return "convenio";
@@ -356,7 +401,8 @@ function generarMapaSvg(porRegion){
     const sinDatos = regionesConDatos.has(nombreRegion) ? '' : ' sin-datos';
     const atenuada = (filtroRegion && filtroRegion !== nombreRegion) ? ' atenuada' : '';
     const datosAttrs = match ? ` data-promedio="${match.promedio}" data-respuestas="${match.totalRespuestas}"` : '';
-    return `<path class="mapa-region${activa}${sinDatos}${atenuada}" data-region="${nombreRegion}" data-color="${color}"${datosAttrs} d="${CHILE_REGION_PATHS[nombreRegion]}" fill="${color}"></path>`;
+    const interactivoAttrs = regionesConDatos.has(nombreRegion) ? ' tabindex="0" role="button"' : '';
+    return `<path class="mapa-region${activa}${sinDatos}${atenuada}" data-region="${nombreRegion}" data-color="${color}"${datosAttrs}${interactivoAttrs} d="${CHILE_REGION_PATHS[nombreRegion]}" fill="${color}"></path>`;
   }).join('');
   return `<svg class="chile-svg" viewBox="0 0 ${CHILE_MAP_WIDTH} ${CHILE_MAP_HEIGHT}" preserveAspectRatio="xMidYMid meet">${paths}</svg>`;
 }
@@ -369,7 +415,8 @@ function generarListaRegiones(porRegion){
     const activa = filtroRegion === nombreRegion ? ' activa' : '';
     const sinDatos = regionesConDatos.has(nombreRegion) ? '' : ' sin-datos';
     const atenuada = (filtroRegion && filtroRegion !== nombreRegion) ? ' atenuada' : '';
-    return `<div class="region-item${activa}${sinDatos}${atenuada}" data-region="${nombreRegion}"><span class="dot" style="background:${color};"></span>${nombreRegion}</div>`;
+    const interactivoAttrs = regionesConDatos.has(nombreRegion) ? ' tabindex="0" role="button"' : '';
+    return `<div class="region-item${activa}${sinDatos}${atenuada}" data-region="${nombreRegion}"${interactivoAttrs}><span class="dot" style="background:${color};"></span>${nombreRegion}</div>`;
   });
   const mitad = Math.ceil(filas.length / 2);
   return { izquierda: filas.slice(0, mitad).join(''), derecha: filas.slice(mitad).join('') };
@@ -786,6 +833,94 @@ async function cargarDatos(silencioso = false){
   }
 }
 
+// ==== Revisión de encuestas una a una (vista independiente de los filtros principales) ====
+
+function formatearFechaDetalle(valor){
+  if (!valor) return '';
+  const fecha = new Date(valor);
+  if (isNaN(fecha.getTime())) return String(valor);
+  const dd = String(fecha.getDate()).padStart(2, '0');
+  const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+  const yyyy = fecha.getFullYear();
+  return `${dd}-${mm}-${yyyy}`;
+}
+
+function abrirModalDetalle(){
+  poblarSelect('select-detalle-empresa', todasLasRespuestas.map(r => r.empresa), 'Selecciona un centro');
+  const empresaPrincipal = document.getElementById('select-empresa').value;
+  document.getElementById('select-detalle-empresa').value = empresaPrincipal;
+  cargarDetalleEmpresa(empresaPrincipal);
+  document.getElementById('detalle-overlay').classList.add('abierto');
+}
+
+function cerrarModalDetalle(){
+  document.getElementById('detalle-overlay').classList.remove('abierto');
+}
+
+function cargarDetalleEmpresa(empresa){
+  detalleEmpresaSeleccionada = empresa;
+  if (!empresa){
+    detalleRespuestas = [];
+    detalleIndiceSeleccionado = -1;
+    renderDetalleModal();
+    return;
+  }
+  detalleRespuestas = todasLasRespuestas
+    .filter(r => r.empresa === empresa)
+    .slice()
+    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  detalleIndiceSeleccionado = detalleRespuestas.length ? 0 : -1;
+  renderDetalleModal();
+}
+
+function seleccionarDetalleIndice(idx){
+  detalleIndiceSeleccionado = idx;
+  renderDetalleModal();
+}
+
+function renderDetalleModal(){
+  const cont = document.getElementById('detalle-contenido');
+  if (!detalleEmpresaSeleccionada){
+    cont.innerHTML = '<div class="msg">Selecciona un Hospital / Centro para ver sus encuestas.</div>';
+    return;
+  }
+  if (!detalleRespuestas.length){
+    cont.innerHTML = '<div class="msg">Este centro no tiene encuestas registradas.</div>';
+    return;
+  }
+
+  const listaHtml = detalleRespuestas.map((r, i) => `
+    <div class="detalle-item${i === detalleIndiceSeleccionado ? ' activo' : ''}" data-idx="${i}">${escapeHtml(formatearFechaDetalle(r.fecha))} — ${escapeHtml(r.nombre)}</div>
+  `).join('');
+
+  const r = detalleRespuestas[detalleIndiceSeleccionado];
+  const panelHtml = !r ? '' : `
+    <div class="detalle-campo"><b>Fecha:</b> ${escapeHtml(formatearFechaDetalle(r.fecha))}</div>
+    <div class="detalle-campo"><b>Nombre:</b> ${escapeHtml(r.nombre)}</div>
+    <div class="detalle-campo"><b>Cargo:</b> ${escapeHtml(r.cargo)}</div>
+    <div class="detalle-campo"><b>Correo:</b> ${escapeHtml(r.correo)}</div>
+    <div class="detalle-campo"><b>Tipo:</b> ${escapeHtml(r.tipo)}</div>
+    <div class="detalle-campo"><b>Región:</b> ${escapeHtml(r.region)}</div>
+    <div class="detalle-preguntas">
+      <span class="promedio-pill" style="background:${colorPorPromedio(r.q1)};">Q1 Servicio Entregado: ${r.q1}/5</span>
+      <span class="promedio-pill" style="background:${colorPorPromedio(r.q2)};">Q2 Resolución Problema: ${r.q2}/5</span>
+      <span class="promedio-pill" style="background:${colorPorPromedio(r.q3)};">Q3 Entrega: ${r.q3}/5</span>
+      <span class="promedio-pill" style="background:${colorPorPromedio(r.q4)};">Q4 Profesionalismo: ${r.q4}/5</span>
+    </div>
+    <div class="detalle-campo"><b>NPS:</b> ${isNaN(r.nps) ? '—' : r.nps}</div>
+    <div class="detalle-campo"><b>Comentario:</b>
+      <div class="detalle-comentario">${escapeHtml(r.comentarios) || 'Sin comentario'}</div>
+    </div>
+  `;
+
+  cont.innerHTML = `
+    <div class="detalle-cols">
+      <div class="detalle-lista">${listaHtml}</div>
+      <div class="detalle-panel">${panelHtml}</div>
+    </div>
+  `;
+}
+
 async function iniciarApp(){
   try {
     await msalInstance.initialize();
@@ -828,6 +963,13 @@ document.getElementById('chips-tipo').addEventListener('click', (e) => {
   document.querySelectorAll('#chips-tipo .chip').forEach(c => c.classList.toggle('active', c === chip));
   aplicarFiltros();
 });
+document.getElementById('chips-tipo').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  e.preventDefault();
+  chip.click();
+});
 document.getElementById('select-region').addEventListener('change', (e) => {
   filtroRegion = e.target.value;
   aplicarFiltros();
@@ -850,6 +992,31 @@ document.getElementById('contenido').addEventListener('click', (e) => {
   filtroRegion = (filtroRegion === nombreRegion) ? "" : nombreRegion;
   document.getElementById('select-region').value = filtroRegion;
   aplicarFiltros();
+});
+document.getElementById('contenido').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const region = e.target.closest('.mapa-region, .region-item');
+  if (!region) return;
+  e.preventDefault();
+  region.click();
+});
+
+document.getElementById('select-detalle-empresa').addEventListener('change', (e) => {
+  cargarDetalleEmpresa(e.target.value);
+});
+document.getElementById('btn-cerrar-detalle').addEventListener('click', cerrarModalDetalle);
+document.getElementById('detalle-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('detalle-overlay')) cerrarModalDetalle();
+});
+document.getElementById('detalle-contenido').addEventListener('click', (e) => {
+  const item = e.target.closest('.detalle-item');
+  if (!item) return;
+  seleccionarDetalleIndice(Number(item.dataset.idx));
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('detalle-overlay').classList.contains('abierto')) {
+    cerrarModalDetalle();
+  }
 });
 
 const mapaTooltip = document.getElementById('mapa-tooltip');
