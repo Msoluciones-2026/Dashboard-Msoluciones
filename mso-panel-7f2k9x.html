@@ -836,13 +836,38 @@ async function cargarDatos(silencioso = false){
 // ==== Revisión de encuestas una a una (vista independiente de los filtros principales) ====
 
 function formatearFechaDetalle(valor){
-  if (!valor) return '';
-  const fecha = new Date(valor);
-  if (isNaN(fecha.getTime())) return String(valor);
-  const dd = String(fecha.getDate()).padStart(2, '0');
-  const mm = String(fecha.getMonth() + 1).padStart(2, '0');
-  const yyyy = fecha.getFullYear();
-  return `${dd}-${mm}-${yyyy}`;
+  if (valor === null || valor === undefined || valor === '') return '—';
+  // Si ya es un string con formato de fecha reconocible, úsalo tal cual
+  if (typeof valor === 'string' && isNaN(Number(valor))) {
+    const fechaTexto = new Date(valor);
+    if (!isNaN(fechaTexto.getTime())) {
+      return fechaTexto.toLocaleDateString('es-CL');
+    }
+    return valor; // si no se puede parsear, muestra el texto crudo
+  }
+  // Si es numérico (número serial de Excel), convertir correctamente
+  const numeroSerial = Number(valor);
+  if (!isNaN(numeroSerial)) {
+    const msDesdeEpoch = Math.round((numeroSerial - 25569) * 86400 * 1000);
+    const fecha = new Date(msDesdeEpoch);
+    if (!isNaN(fecha.getTime())) {
+      return fecha.toLocaleDateString('es-CL', { timeZone: 'UTC' });
+    }
+  }
+  return String(valor);
+}
+
+function fechaComoTimestamp(valor){
+  if (valor === null || valor === undefined || valor === '') return 0;
+  if (typeof valor === 'string' && isNaN(Number(valor))) {
+    const fechaTexto = new Date(valor);
+    return isNaN(fechaTexto.getTime()) ? 0 : fechaTexto.getTime();
+  }
+  const numeroSerial = Number(valor);
+  if (!isNaN(numeroSerial)) {
+    return Math.round((numeroSerial - 25569) * 86400 * 1000);
+  }
+  return 0;
 }
 
 function abrirModalDetalle(){
@@ -868,7 +893,7 @@ function cargarDetalleEmpresa(empresa){
   detalleRespuestas = todasLasRespuestas
     .filter(r => r.empresa === empresa)
     .slice()
-    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    .sort((a, b) => fechaComoTimestamp(b.fecha) - fechaComoTimestamp(a.fecha));
   detalleIndiceSeleccionado = detalleRespuestas.length ? 0 : -1;
   renderDetalleModal();
 }
