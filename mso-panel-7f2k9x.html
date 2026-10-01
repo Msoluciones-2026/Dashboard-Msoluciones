@@ -687,10 +687,13 @@ function construirIndicesColumnas(encabezados){
   Object.keys(MAPA_COLUMNAS).forEach(nombreEsperado => {
     const clave = MAPA_COLUMNAS[nombreEsperado];
     const idx = normalizados.indexOf(nombreEsperado);
-    if (idx === -1) {
-      console.warn('Columna esperada no encontrada en la tabla de Excel: "' + nombreEsperado + '"');
+    // Varias columnas pueden mapear a la misma clave (nombres alternativos): no pisar un índice ya encontrado
+    if (idx !== -1 || indices[clave] === undefined) indices[clave] = idx;
+  });
+  Object.keys(indices).forEach(clave => {
+    if (indices[clave] === -1) {
+      console.warn('Columna esperada no encontrada en la tabla de Excel para: "' + clave + '"');
     }
-    indices[clave] = idx;
   });
   return indices;
 }
