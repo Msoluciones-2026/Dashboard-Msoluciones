@@ -554,7 +554,7 @@ function render(data, datosMapa){
             <div class="escala-valor">${data.promedioPorPregunta.q1}</div>
           </div>
           <div class="escala-fila">
-            <div class="escala-nombre">Q2 Resolución<br>Problema</div>
+            <div class="escala-nombre">Q2 Diagnóstico<br>Intervención</div>
             <div class="escala-riel">
               <div class="escala-relleno" style="width:${posEscala(data.promedioPorPregunta.q2)}%;background:${colorPorPromedio(data.promedioPorPregunta.q2)};"></div>
             </div>
@@ -671,6 +671,7 @@ const MAPA_COLUMNAS = {
   "correo": "correo",
   "q1 servicio entregado": "q1",
   "q2 resolucion problemas": "q2",
+  "q2 diagnostico e intervencion": "q2",
   "q3 entrega": "q3",
   "q4 profesionalismo": "q4",
   "nps": "nps",
@@ -928,7 +929,7 @@ function renderDetalleModal(){
     <div class="detalle-campo"><b>Región:</b> ${escapeHtml(r.region)}</div>
     <div class="detalle-preguntas">
       <span class="promedio-pill" style="background:${colorPorPromedio(r.q1)};">Q1 Servicio Entregado: ${r.q1}/5</span>
-      <span class="promedio-pill" style="background:${colorPorPromedio(r.q2)};">Q2 Resolución Problema: ${r.q2}/5</span>
+      <span class="promedio-pill" style="background:${colorPorPromedio(r.q2)};">Q2 Diagnóstico e Intervención: ${r.q2}/5</span>
       <span class="promedio-pill" style="background:${colorPorPromedio(r.q3)};">Q3 Entrega: ${r.q3}/5</span>
       <span class="promedio-pill" style="background:${colorPorPromedio(r.q4)};">Q4 Profesionalismo: ${r.q4}/5</span>
     </div>
